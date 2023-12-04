@@ -22,6 +22,7 @@
 #include "expose_environment_setup/expose_shape_setup.h"
 #include "expose_environment_setup/expose_shape_deformation_setup.h"
 #include "expose_environment_setup/expose_rigid_body_setup.h"
+#include "expose_environment_setup/expose_vehicle_systems_setup.h"
 
 #include "tudatpy/docstrings.h"
 #include "tudatpy/scalarTypes.h"
@@ -44,6 +45,7 @@ namespace ta = tudat::aerodynamics;
 namespace trf = tudat::reference_frames;
 namespace tg = tudat::gravitation;
 namespace tcc = tudat::coordinate_conversions;
+namespace tp = tudat::propagators;
 
 
 
@@ -66,12 +68,15 @@ namespace environment_setup {
                 .def_readwrite("gravity_field_settings", &tss::BodySettings::gravityFieldSettings, get_docstring("BodySettings.gravity_field_settings").c_str())
                 .def_readwrite("rotation_model_settings", &tss::BodySettings::rotationModelSettings, get_docstring("BodySettings.rotation_model_settings").c_str())
                 .def_readwrite("shape_settings", &tss::BodySettings::shapeModelSettings, get_docstring("BodySettings.shape_settings").c_str())
-                .def_readwrite("radiation_pressure_settings", &tss::BodySettings::radiationPressureSettings, get_docstring("BodySettings.radiation_pressure_settings").c_str())
                 .def_readwrite("aerodynamic_coefficient_settings", &tss::BodySettings::aerodynamicCoefficientSettings, get_docstring("BodySettings.aerodynamic_coefficient_settings").c_str())
                 .def_readwrite("gravity_field_variation_settings", &tss::BodySettings::gravityFieldVariationSettings, get_docstring("BodySettings.gravity_field_variation_settings").c_str())
                 .def_readwrite("shape_deformation_settings", &tss::BodySettings::bodyDeformationSettings, get_docstring("BodySettings.shape_deformation_settings").c_str())
                 .def_readwrite("ground_station_settings", &tss::BodySettings::groundStationSettings, get_docstring("BodySettings.ground_station_settings").c_str())
-                .def_readwrite("rigid_body_settings", &tss::BodySettings::rigidBodyPropertiesSettings, get_docstring("BodySettings.rigidBodyPropertiesSettings").c_str());
+                .def_readwrite("rigid_body_settings", &tss::BodySettings::rigidBodyPropertiesSettings, get_docstring("BodySettings.rigidBodyPropertiesSettings").c_str())
+                .def_readwrite("radiation_pressure_target_settings", &tss::BodySettings::radiationPressureTargetModelSettings, get_docstring("BodySettings.rigidBodyPropertiesSettings").c_str())
+                .def_readwrite("radiation_source_settings", &tss::BodySettings::radiationSourceModelSettings, get_docstring("BodySettings.rigidBodyPropertiesSettings").c_str())
+                .def_readwrite("vehicle_shape_settings", &tss::BodySettings::bodyExteriorPanelSettings_, get_docstring("BodySettings.vehicle_shape_settings").c_str())
+                .def_readwrite("radiation_pressure_settings", &tss::BodySettings::radiationPressureSettings, get_docstring("BodySettings.radiation_pressure_settings").c_str());
 
 
         py::class_<tss::BodyListSettings,
@@ -153,7 +158,7 @@ namespace environment_setup {
               py::arg("body_settings"),
               get_docstring("create_system_of_bodies").c_str());
 
-        m.def("add_empty_tabulated_ephemeris", &tss::addEmptyTabulatedEphemeris,
+        m.def("add_empty_tabulated_ephemeris", &tp::addEmptyTabulatedEphemeris< double, TIME_TYPE >,
               py::arg("bodies"),
               py::arg("body_name"),
               py::arg("ephemeris_origin") = "",
@@ -172,7 +177,7 @@ namespace environment_setup {
 
         m.def("create_ground_station_ephemeris",
               py::overload_cast< const std::shared_ptr< tss::Body >, const std::string& >(
-                  &tss::createReferencePointEphemeris<double, TIME_TYPE > ),
+                  &tss::createReferencePointEphemeris< TIME_TYPE, double > ),
               py::arg("body"),
               py::arg("station_name") );
 
@@ -196,7 +201,12 @@ namespace environment_setup {
 
         m.def("add_radiation_pressure_interface",
               &tss::addRadiationPressureInterface,
-              py::arg("bodies"), py::arg("body_name"), py::arg("radiation_pressure_settings"),
+              py::arg("bodies"), py::arg("body_name"), py::arg("radiation_pressure_settings"));
+
+
+        m.def("add_radiation_pressure_target_model",
+              &tss::addRadiationPressureTargetModel,
+              py::arg("bodies"), py::arg("body_name"), py::arg("radiation_pressure_target_settings"),
               get_docstring("add_radiation_pressure_interface").c_str());
 
         m.def("add_rotation_model",
@@ -204,10 +214,16 @@ namespace environment_setup {
               py::arg("bodies"), py::arg("body_name"), py::arg("rotation_model_settings"),
               get_docstring("add_rotation_model").c_str());
 
+
         m.def("add_mass_properties_model",
               &tss::addRigidBodyProperties,
-              py::arg("bodies"), py::arg("body_name"), py::arg("mass_property_settings"),
-              get_docstring("add_mass_properties_model").c_str());
+              py::arg("bodies"), py::arg("body_name"), py::arg("mass_property_settings"));
+
+        m.def("add_rigid_body_properties",
+              &tss::addRigidBodyProperties,
+              py::arg("bodies"), py::arg("body_name"), py::arg("rigid_body_property_settings"),
+              get_docstring("add_rigid_body_properties").c_str());
+
 
         m.def("add_engine_model",
               &tss::addEngineModel,
@@ -302,6 +318,10 @@ namespace environment_setup {
 
         auto rigid_body_setup = m.def_submodule("rigid_body");
         rigid_body::expose_rigid_body_setup(rigid_body_setup);
+
+        auto vehicle_systems_setup = m.def_submodule("vehicle_systems");
+        vehicle_systems::expose_vehicle_systems_setup(vehicle_systems_setup);
+
 
 //        auto system_model_setup = m.def_submodule("system_models");
 //        gravity_field_variation::expose_system_model_setup(system_model_setup);

@@ -46,9 +46,8 @@ void expose_estimation_setup(py::module &m) {
           &tss::createParametersToEstimate< double >,
           py::arg("parameter_settings"),
           py::arg("bodies"),
-          py::arg("propagator_settings") =
-                  std::shared_ptr< tp::PropagatorSettings< double > >( ),
-          py::arg("consider_parameters_names") = std::vector< std::shared_ptr< tep::EstimatableParameterSettings > >(  ),
+          py::arg("propagator_settings") = nullptr,
+          py::arg("consider_parameters_names") = std::vector< std::shared_ptr< tep::EstimatableParameterSettings > >( ),
           get_docstring("create_parameter_set").c_str() );
 
 
@@ -72,7 +71,7 @@ void expose_estimation_setup(py::module &m) {
             const std::vector< Eigen::Matrix< double, Eigen::Dynamic, 1 > >&,
             const std::vector< TIME_TYPE >,
             const tom::LinkEndType,
-            const std::shared_ptr< tom::ObservationAncilliarySimulationSettings < TIME_TYPE > > >(
+            const std::shared_ptr< tom::ObservationAncilliarySimulationSettings > >(
         &tom::createManualObservationCollection< double, TIME_TYPE > ),
           py::arg("observable_type"),
           py::arg("link_ends"),

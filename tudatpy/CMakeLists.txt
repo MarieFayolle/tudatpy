@@ -104,6 +104,7 @@ YACMA_PYTHON_MODULE(kernel
         kernel/expose_numerical_simulation/expose_environment_setup/expose_shape_setup.cpp
         kernel/expose_numerical_simulation/expose_environment_setup/expose_ground_station_setup.cpp
         kernel/expose_numerical_simulation/expose_environment_setup/expose_rigid_body_setup.cpp
+        kernel/expose_numerical_simulation/expose_environment_setup/expose_vehicle_systems_setup.cpp
 
 
         kernel/expose_numerical_simulation/expose_propagation_setup.cpp
@@ -157,20 +158,30 @@ install(TARGETS kernel
         LIBRARY DESTINATION ${TUDATPY_INSTALL_PATH}
         )
 
-# Install the Python files.
+# Install Python files.
 install(FILES ${TUDATPY_PYTHON_FILES} "${CMAKE_CURRENT_BINARY_DIR}/_version.py"
         DESTINATION ${TUDATPY_INSTALL_PATH})
 
-macro(INSTALL_PURE_PYTHON_MODULE_DIR module_dir_name)
+# Install hybrid C++/Python modules
+macro(INSTALL_HYBRID_CPP_PYTHON_MODULE module_dir_name)
     install(DIRECTORY ${module_dir_name}/ DESTINATION "${TUDATPY_INSTALL_PATH}/${module_dir_name}")
     file(COPY ${module_dir_name}/ DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${module_dir_name}/)
 endmacro()
 
-INSTALL_PURE_PYTHON_MODULE_DIR(apps)
-INSTALL_PURE_PYTHON_MODULE_DIR(bodies)
-INSTALL_PURE_PYTHON_MODULE_DIR(plotting)
-INSTALL_PURE_PYTHON_MODULE_DIR(util)
-INSTALL_PURE_PYTHON_MODULE_DIR(io)
+# Hybrid modules
+INSTALL_HYBRID_CPP_PYTHON_MODULE(astro)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(trajectory_design)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(constants)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(interface)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(math)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(numerical_simulation)
+# Pure Python modules
+INSTALL_HYBRID_CPP_PYTHON_MODULE(apps)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(bodies)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(plotting)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(data)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(util)
+INSTALL_HYBRID_CPP_PYTHON_MODULE(io)
 
 #install(FILES test.py "${CMAKE_CURRENT_BINARY_DIR}/_version.py")
 file(COPY ../tests DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../)

@@ -273,14 +273,24 @@ namespace dependent_variable {
 //                 py::arg("component_index") = -1);
 
 
+        m.def("get_dependent_variable_id",
+              &tp::getDependentVariableId,
+              py::arg("dependent_variable_settings"),
+              get_docstring("get_dependent_variable_id").c_str());
+
+        m.def("get_dependent_variable_size",
+              &tp::getDependentVariableSaveSize,
+              py::arg("dependent_variable_settings"),
+              get_docstring("get_dependent_variable_size").c_str());
+
+        m.def("get_dependent_variable_shape",
+              &tp::getDependentVariableShape,
+              py::arg("dependent_variable_settings"),
+              get_docstring("get_dependent_variable_shape").c_str());
         //////////////////////////////////////////////////////////////////////////////////////
         /// FREE FUNCTIONS ///////////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////////////////////////////
 
-//        m.def("create",
-//              &tp::createDependentVariableSaveSettings,
-//              py::arg("dependent_variable_list"),
-//              py::arg("print_variable_indices") = true);
 
         m.def("mach_number",
               &tp::machNumberDependentVariable,
@@ -515,8 +525,8 @@ namespace dependent_variable {
 
         m.def("radiation_pressure",
               &tp::radiationPressureDependentVariable,
-              py::arg("body"),
-              py::arg("radiating_body"),
+              py::arg("target_body"),
+              py::arg("source_body"),
               get_docstring("radiation_pressure").c_str());
 
         m.def("total_gravity_field_variation_acceleration",
@@ -697,6 +707,36 @@ namespace dependent_variable {
               py::arg("bodies_to_check"),
               py::arg("minimum_elevation_angle"),
               get_docstring("minimum_visible_station_body_distances").c_str());
+
+        m.def("center_of_mass",
+              &tp::centerOfMassVariableSaveSettings,
+              py::arg("body"),
+              get_docstring("center_of_mass").c_str());
+
+        m.def("inertia_tensor",
+              &tp::inertiaTensorVariableSaveSettings,
+              py::arg("body"),
+              get_docstring("inertia_tensor").c_str());
+
+        m.def("received_irradiance",
+              &tp::receivedIrradianceDependentVariable,
+              py::arg("target_body"),
+              py::arg("source_body"),
+              get_docstring("received_irradiance").c_str());
+
+        m.def("received_irradiance_shadow_function",
+              &tp::receivedFractionDependentVariable,
+              py::arg("target_body"),
+              py::arg("source_body"),
+              get_docstring("received_irradiance_shadow_function").c_str());
+
+        m.def("visible_radiation_source_area",
+              &tp::visibleSourceAreaDependentVariable,
+              py::arg("target_body"),
+              py::arg("source_body"),
+              get_docstring("received_irradiance_shadow_function").c_str());
+
+
 
 
     }

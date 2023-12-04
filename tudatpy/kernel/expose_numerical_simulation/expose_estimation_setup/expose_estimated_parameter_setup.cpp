@@ -16,7 +16,44 @@
 
 namespace tep = tudat::estimatable_parameters;
 namespace tss = tudat::simulation_setup;
+namespace tp = tudat::propagators;
 
+namespace tudat
+{
+namespace estimatable_parameters
+{
+inline std::shared_ptr< EstimatableParameterSettings > empiricalAccelerationMagnitudesFull(
+    const std::string associatedBody,
+    const std::string centralBody )
+{
+    std::map< basic_astrodynamics::EmpiricalAccelerationComponents,
+        std::vector< basic_astrodynamics::EmpiricalAccelerationFunctionalShapes > > componentsToEstimate;
+    componentsToEstimate[ basic_astrodynamics::radial_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::constant_empirical );
+    componentsToEstimate[ basic_astrodynamics::radial_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::sine_empirical );
+    componentsToEstimate[ basic_astrodynamics::radial_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::cosine_empirical );
+    componentsToEstimate[ basic_astrodynamics::along_track_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::constant_empirical );
+    componentsToEstimate[ basic_astrodynamics::along_track_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::sine_empirical );
+    componentsToEstimate[ basic_astrodynamics::along_track_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::cosine_empirical );
+    componentsToEstimate[ basic_astrodynamics::across_track_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::constant_empirical );
+    componentsToEstimate[ basic_astrodynamics::across_track_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::sine_empirical );
+    componentsToEstimate[ basic_astrodynamics::across_track_empirical_acceleration_component ].push_back(
+        basic_astrodynamics::cosine_empirical );
+
+    return std::make_shared< EmpiricalAccelerationEstimatableParameterSettings >(
+        associatedBody, centralBody, componentsToEstimate );
+}
+
+
+}
+}
 namespace tudatpy {
 namespace numerical_simulation {
 namespace estimation_setup {
@@ -62,16 +99,35 @@ void expose_estimated_parameter_setup(py::module &m) {
             .value("inverse_tidal_quality_factor_type", tep::EstimatebleParametersEnum::inverse_tidal_quality_factor)
             .export_values();
 
+
+    py::class_<tep::CustomAccelerationPartialSettings,
+        std::shared_ptr<tep::CustomAccelerationPartialSettings>>(m, "CustomAccelerationPartialSettings",
+                                                            get_docstring("CustomAccelerationPartialSettings").c_str() );
+
+
+    m.def("custom_analytical_partial",
+          &tep::analyticalAccelerationPartialSettings,
+          py::arg("analytical_partial_function"),
+          py::arg("body_undergoing_acceleration"),
+          py::arg("body_exerting_acceleration"),
+          py::arg("acceleration_type"),
+          get_docstring("custom_analytical_partial").c_str() );
+
+    m.def("custom_numerical_partial",
+          &tep::numericalAccelerationPartialSettings,
+          py::arg("parameter_perturbation"),
+          py::arg("body_undergoing_acceleration"),
+          py::arg("body_exerting_acceleration"),
+          py::arg("acceleration_type"),
+          py::arg("environment_updates") = std::map< tp::EnvironmentModelsToUpdate, std::vector< std::string > >( ),
+          get_docstring("custom_numerical_partial").c_str() );
+
     py::class_<tep::EstimatableParameterSettings,
             std::shared_ptr<tep::EstimatableParameterSettings>>(m, "EstimatableParameterSettings",
-                                                                get_docstring("EstimatableParameterSettings").c_str() );
-            // .def(py::init<
-            //      const std::string,
-            //      const tep::EstimatebleParametersEnum,
-            //      const std::string>(),
-            //      py::arg("associated_body"),
-            //      py::arg("parameter_type"),
-            //      py::arg("point_on_body_id") = "");
+                                                                get_docstring("EstimatableParameterSettings").c_str() )
+        .def_readwrite("custom_partial_settings", &tep::EstimatableParameterSettings::customPartialSettings_ );
+
+
 
 
 
@@ -114,6 +170,12 @@ void expose_estimated_parameter_setup(py::module &m) {
           py::arg("body"),
           py::arg("centralBody"),
           get_docstring("constant_empirical_acceleration_terms").c_str() );
+
+    m.def("full_empirical_acceleration_terms",
+          &tep::empiricalAccelerationMagnitudesFull,
+          py::arg("body"),
+          py::arg("centralBody"),
+          get_docstring("empirical_accelerations").c_str() );
 
     m.def("empirical_accelerations",
           &tep::empiricalAccelerationMagnitudes,
@@ -387,6 +449,21 @@ void expose_estimated_parameter_setup(py::module &m) {
           &tep::scaledLongitudeLibrationAmplitude,
           py::arg("body_name"),
           get_docstring("scaled_longitude_libration_amplitude").c_str() );
+
+    m.def("yarkovsky_parameter",
+          &tep::yarkovskyParameter,
+          py::arg("body_name"),
+          py::arg("central_body_name") = "Sun",
+          get_docstring("yarkovsky_parameter").c_str() );
+
+    m.def("custom_parameter",
+          &tep::customParameterSettings,
+          py::arg("custom_id"),
+          py::arg("parameter_size"),
+          py::arg("get_parameter_function"),
+          py::arg("set_parameter_function"),
+          get_docstring("custom_parameter").c_str() );
+
 
     // ###############  Global (GR) Model Parameters ################################
 

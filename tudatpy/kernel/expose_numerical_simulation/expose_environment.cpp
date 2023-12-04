@@ -8,6 +8,7 @@
  *    http://tudat.tudelft.nl/LICENSE.
  */
 
+#include "tudatpy/scalarTypes.h"
 #include "expose_environment.h"
 #include <tudat/basics/deprecationWarnings.h>
 
@@ -18,6 +19,7 @@
 #include <tudat/astro/gravitation.h>
 #include "tudat/astro/ground_stations/groundStation.h"
 #include "tudat/simulation/environment_setup/body.h"
+#include "tudat/simulation/environment_setup/createGroundStations.h"
 
 
 #include <pybind11/chrono.h>
@@ -377,7 +379,11 @@ void expose_environment(py::module &m) {
                  get_docstring("Ephemeris.cartesian_position").c_str())
             .def("cartesian_velocity", &te::Ephemeris::getCartesianVelocity,
                  py::arg("current_time"),
-                 get_docstring("Ephemeris.cartesian_velocity").c_str());
+                 get_docstring("Ephemeris.cartesian_velocity").c_str())
+            .def_property_readonly("frame_origin", &te::Ephemeris::getReferenceFrameOrigin,
+                 get_docstring("Ephemeris.frame_origin").c_str())
+            .def_property_readonly("frame_orientation", &te::Ephemeris::getReferenceFrameOrientation,
+                 get_docstring("Ephemeris.frame_orientation").c_str());
 
 
     py::class_<te::ConstantEphemeris,
@@ -461,6 +467,11 @@ void expose_environment(py::module &m) {
                  py::arg("frame_orientation") = "J2000",
                  py::arg("tle") = nullptr,
                  py::arg("use_sdp") = false);
+
+    m.def( "create_ground_station_ephemeris",
+           py::overload_cast< const std::shared_ptr< tss::Body >, const std::string& >( &tss::createReferencePointEphemeris< TIME_TYPE, double > ),
+               "body_with_ground_station",
+               "station_name" );
 
     /*!
      **************   ROTATION MODELS  ******************
@@ -614,16 +625,19 @@ void expose_environment(py::module &m) {
 
     py::class_<tgs::PointingAnglesCalculator,
             std::shared_ptr<tgs::PointingAnglesCalculator>>(m, "PointingAnglesCalculator")
-            .def("calculate_elevation_angle", &tgs::PointingAnglesCalculator::calculateElevationAngle,
+            .def("calculate_elevation_angle",
+                 py::overload_cast<const Eigen::Vector3d&, const double >( &tgs::PointingAnglesCalculator::calculateElevationAngleFromInertialVector ),
                  py::arg( "inertial_vector_to_target" ),
                  py::arg( "time" ) )
-            .def("calculate_azimuth_angle", &tgs::PointingAnglesCalculator::calculateAzimuthAngle,
+            .def("calculate_azimuth_angle",
+                py::overload_cast<const Eigen::Vector3d&, const double >( &tgs::PointingAnglesCalculator::calculateAzimuthAngleFromInertialVector ),
                  py::arg( "inertial_vector_to_target" ),
                  py::arg( "time" ) )
             .def("convert_inertial_vector_to_topocentric",
                  &tgs::PointingAnglesCalculator::convertVectorFromInertialToTopocentricFrame,
                  py::arg( "inertial_vector" ),
                  py::arg( "time" ) );
+
 
 
     /*!
@@ -658,6 +672,7 @@ void expose_environment(py::module &m) {
             .def_property("flight_conditions", &tss::Body::getFlightConditions, &tss::Body::setFlightConditions, get_docstring("Body.flight_conditions").c_str())
             .def_property("rotation_model", &tss::Body::getRotationalEphemeris, &tss::Body::setRotationalEphemeris, get_docstring("Body.rotation_model").c_str())
             .def_property("system_models", &tss::Body::getVehicleSystems, &tss::Body::setVehicleSystems, get_docstring("Body.system_models").c_str())
+            .def_property("rigid_body_properties", &tss::Body::getMassProperties, &tss::Body::setMassProperties, get_docstring("Body.rigid_body_properties").c_str())
             .def_property_readonly("gravitational_parameter", &tss::Body::getGravitationalParameter, get_docstring("Body.gravitational_parameter").c_str())
             .def("get_ground_station", &tss::Body::getGroundStation, py::arg("station_name"))
             .def_property_readonly("ground_station_list", &tss::Body::getGroundStationMap );
@@ -673,18 +688,30 @@ void expose_environment(py::module &m) {
             .def("get_body", &tss::SystemOfBodies::getBody,
                  py::arg("body_name"),
                  get_docstring("SystemOfBodies.get_body").c_str())
-            .def("create_empty_body", &tss::SystemOfBodies::createEmptyBody,
+            .def("create_empty_body", &tss::SystemOfBodies::createEmptyBody< double, TIME_TYPE >,
                  py::arg("body_name"),
                  py::arg("process_body") = 1,
                  get_docstring("SystemOfBodies.create_empty_body").c_str())
-            .def("add_body", &tss::SystemOfBodies::addBody,
+            .def("does_body_exist", &tss::SystemOfBodies::doesBodyExist,
+                 py::arg("body_name"),
+                 get_docstring("SystemOfBodies.does_body_exist").c_str())
+            .def("list_of_bodies", &tss::SystemOfBodies::getListOfBodies,
+                 get_docstring("SystemOfBodies.list_of_bodies").c_str())
+//            .def("get_body_dict", &tss::SystemOfBodies::getMap,
+//                 get_docstring("SystemOfBodies.get_body_dict").c_str())
+            .def("add_body", &tss::SystemOfBodies::addBody< double, TIME_TYPE >,
                  py::arg("body_to_add"),
                  py::arg("body_name"),
                  py::arg("process_body") = 1,
                  get_docstring("SystemOfBodies.add_body").c_str())
             .def("remove_body", &tss::SystemOfBodies::deleteBody,
                  py::arg("body_name"),
-                 get_docstring("SystemOfBodies.remove_body").c_str());
+                 get_docstring("SystemOfBodies.remove_body").c_str())
+            .def("global_frame_orientation", &tss::SystemOfBodies::getFrameOrientation,
+                 get_docstring("SystemOfBodies.global_frame_orientation").c_str())
+            .def("global_frame_origin", &tss::SystemOfBodies::getFrameOrigin,
+                 get_docstring("SystemOfBodies.global_frame_origin").c_str());
+
 //            .def_property_readonly("number_of_bodies", &tss::SystemOfBodies::getNumberOfBodies,
 //                                   get_docstring("number_of_bodies").c_str() );
 
