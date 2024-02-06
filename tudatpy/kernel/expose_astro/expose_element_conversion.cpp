@@ -64,6 +64,15 @@ void expose_element_conversion(py::module &m) {
     /*!
      **************   KEPLER ELEMENTS  ******************
      */
+    m.def("convert_position_elements",
+          &tcc::convertPositionElements,
+          py::arg("originalElements"),
+          py::arg("original_elemet_types"),
+          py::arg("new_element_types"),
+          py::arg("shape_model"),
+          py::arg("tolerance"),
+            get_docstring("convert_position_elements").c_str());
+
 
     m.def("cartesian_to_keplerian",
           &toec::convertCartesianToKeplerianElements< double >,
@@ -173,7 +182,7 @@ void expose_element_conversion(py::module &m) {
               &toec::convertKeplerianToModifiedEquinoctialElements< double > ),
           py::arg("keplerian_elements"),
           py::arg("singularity_at_zero_inclination"),
-          get_docstring("keplerian_to_mee").c_str());
+          get_docstring("keplerian_to_mee_manual_singularity").c_str());
 
     m.def("keplerian_to_mee",
           py::overload_cast< const Eigen::Vector6d& >(
